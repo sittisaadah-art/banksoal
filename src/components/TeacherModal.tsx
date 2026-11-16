@@ -1,11 +1,15 @@
-import { useState, type ChangeEvent } from 'react';
+import { useState, type ChangeEvent, type FormEvent } from 'react';
 import {
   Edit3,
+  Eye,
+  EyeOff,
   FileDown,
   FileUp,
+  Lock,
   Plus,
   RotateCcw,
   Save,
+  ShieldCheck,
   Trash2,
   X,
 } from 'lucide-react';
@@ -51,6 +55,11 @@ export function TeacherModal({
   onShowToast,
   onClose,
 }: TeacherModalProps) {
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [showPin, setShowPin] = useState(false);
+  const [pinError, setPinError] = useState('');
+
   const [activeTab, setActiveTab] = useState<TeacherTab>('general');
   const [formConfig, setFormConfig] = useState<TeacherConfig>(config);
   const [searchTerm, setSearchTerm] = useState('');
@@ -282,6 +291,112 @@ export function TeacherModal({
     short: 'Isian Singkat',
   };
 
+  const TEACHER_PIN = 'guru123';
+
+  const handlePinSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (pinInput.trim() === TEACHER_PIN) {
+      setIsUnlocked(true);
+      setPinError('');
+      setPinInput('');
+      onShowToast('🔓 Berhasil masuk ke Mode Guru!', 'success');
+    } else {
+      setPinError('PIN salah! Silakan periksa kembali PIN guru.');
+      onShowToast('❌ PIN guru tidak valid.', 'warning');
+    }
+  };
+
+  if (!isUnlocked) {
+    return (
+      <div className="fixed inset-0 z-40 bg-slate-950/85 flex items-center justify-center p-3 sm:p-5">
+        <div className="bg-white w-full max-w-md rounded-3xl p-6 sm:p-7 border-4 border-purple-500 shadow-2xl">
+          <div className="flex items-start justify-between gap-2 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-purple-100 border-2 border-purple-300 flex items-center justify-center text-purple-700 shrink-0">
+                <Lock className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-[11px] font-extrabold text-purple-700">
+                  EDUBLOX – INFORMATIKA
+                </div>
+                <h2 className="font-fredoka text-xl font-bold text-slate-900">
+                  Login Mode Guru
+                </h2>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-rose-500 hover:text-white flex items-center justify-center transition"
+              aria-label="Tutup"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <p className="text-xs sm:text-sm font-semibold text-slate-600 mb-4 leading-relaxed">
+            Masukkan PIN Guru untuk mengakses pengaturan kelas, manajemen bank soal, ornamen kota 3D, dan hasil nilai siswa.
+          </p>
+
+          <form onSubmit={handlePinSubmit} className="space-y-3.5">
+            <div>
+              <label
+                htmlFor="teacher-pin-input"
+                className="block text-xs font-extrabold text-slate-700 mb-1.5"
+              >
+                PIN Mode Guru
+              </label>
+              <div className="relative">
+                <input
+                  id="teacher-pin-input"
+                  type={showPin ? 'text' : 'password'}
+                  autoFocus
+                  value={pinInput}
+                  onChange={(e) => {
+                    setPinInput(e.target.value);
+                    if (pinError) setPinError('');
+                  }}
+                  placeholder="Masukkan PIN guru..."
+                  className="w-full px-4 py-3 pr-11 rounded-2xl border-2 border-slate-300 focus:border-purple-600 outline-none font-bold text-slate-900 bg-slate-50 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPin((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-purple-700 p-1"
+                  aria-label={showPin ? 'Sembunyikan PIN' : 'Tampilkan PIN'}
+                >
+                  {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {pinError && (
+                <p className="mt-1.5 text-xs font-bold text-rose-600">
+                  {pinError}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn-3d btn-slate px-4 py-2.5 text-xs sm:text-sm flex-1"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="btn-3d btn-purple px-5 py-2.5 text-xs sm:text-sm flex-1"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                Masuk Mode Guru
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-40 bg-slate-950/85 flex items-center justify-center p-2 sm:p-5">
       <div className="bg-white w-full max-w-5xl rounded-3xl p-4 sm:p-6 max-h-[94vh] flex flex-col overflow-hidden border-4 border-purple-500 shadow-2xl">
@@ -295,14 +410,28 @@ export function TeacherModal({
               ⚙️ Panel Pengaturan Guru & Manajemen Bank Soal
             </h2>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-rose-500 hover:text-white flex items-center justify-center transition"
-            aria-label="Tutup"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setIsUnlocked(false);
+                onShowToast('🔒 Mode Guru dikunci kembali.', 'info');
+              }}
+              className="px-3 py-2 rounded-xl bg-purple-100 text-purple-800 hover:bg-purple-200 font-bold text-xs inline-flex items-center gap-1.5 transition"
+              title="Kunci Mode Guru"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              Kunci
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-rose-500 hover:text-white flex items-center justify-center transition"
+              aria-label="Tutup"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
